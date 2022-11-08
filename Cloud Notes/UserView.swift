@@ -7,13 +7,14 @@
 
 import SwiftUI
 
-struct ContentView: View {
+struct UserView: View {
+    
+    @StateObject private var vm = UserViewModel()
+    
     var body: some View {
         VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundColor(.accentColor)
-            Text("Hello, world!")
+            Text("IS SIGNED IN: \(vm.isSignedIntoiCloud.description.uppercased())")
+            Text(vm.error)
         }
         .padding()
     }
@@ -21,6 +22,6 @@ struct ContentView: View {
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
-        ContentView()
+        UserView()
     }
 }

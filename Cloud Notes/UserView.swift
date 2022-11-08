@@ -13,7 +13,7 @@ struct UserView: View {
     
     var body: some View {
         VStack {
-            Text("IS SIGNED IN: \(vm.isSignedIntoiCloud.description.uppercased())")
+            Text("IS SIGNED IN: \(vm.isSignedIntoiCloud.description.uppercased()) with user: \(vm.username)")
             Text(vm.error)
         }
         .padding()

@@ -20,7 +20,10 @@ struct CRUDView: View {
                 addButton
                 List {
                     ForEach(vm.fruits, id:\.self) { fruit in
-                        Text(fruit)
+                        Text(fruit.name ?? "No Fruit available")
+                            .onTapGesture {
+                                vm.updateItem(fruit: fruit)
+                            }
                     }
                 }
                 .listStyle(.plain)
@@ -81,7 +84,7 @@ extension CRUDView {
 class CRUDViewModel: ObservableObject {
      
     @Published var text: String = ""
-    @Published var fruits: [String] = []
+    @Published var fruits: [FruitModel] = []
     
     init() {
         fetchItems()
@@ -109,6 +112,7 @@ class CRUDViewModel: ObservableObject {
             
             DispatchQueue.main.async {
                 self?.text = ""
+                self?.fetchItems()
             }
         }
     }
@@ -129,15 +133,14 @@ class CRUDViewModel: ObservableObject {
 //        queryOperation.resultsLimit //
         
         
-        var returnedItems: [String] = []
+        var returnedItems: [FruitModel] = []
         
         // This callback is called for each item in the database, so we append into our
         // local property here.
         queryOperation.recordMatchedBlock = { returnedRecordId, returnedResult in
             switch returnedResult {
             case .success(let record):
-                guard let name = record["name"] as? String else { return }
-                returnedItems.append(name)
+                returnedItems.append(FruitModel(record: record))
                 break
             case .failure(let error):
                 print("❌ ERROR: recordMatchedBlock: ", error.localizedDescription)
@@ -157,7 +160,28 @@ class CRUDViewModel: ObservableObject {
         CKContainer.default().publicCloudDatabase.add(queryOperation)
     }
     
-    private func addOperation(operation: CKDatabaseOperation) {
-        
+    func updateItem(fruit: FruitModel) {
+        let record = fruit.record
+        record["name"] = fruit.name + "*"
+        saveItem(record: record)
+    }
+}
+
+
+struct FruitModel: Hashable {
+    let record: CKRecord
+    
+    init(record: CKRecord) {
+        self.record = record
+    }
+    
+    init(name: String) {
+        let record = CKRecord(recordType: "Fruit")
+        record["name"] = name
+        self.record = record
+    }
+    
+    var name: String {
+        return record["name"] as? String ?? ""
     }
 }

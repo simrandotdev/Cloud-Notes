@@ -25,6 +25,9 @@ struct CRUDView: View {
                                 vm.updateItem(fruit: fruit)
                             }
                     }
+                    .onDelete { indexSet in
+                        vm.delete(indexSet: indexSet)
+                    }
                 }
                 .listStyle(.plain)
             }
@@ -70,7 +73,6 @@ extension CRUDView {
                 .cornerRadius(10)
                 .padding()
                 .font(.headline)
-            
                 .foregroundColor(.white)
         }
     }
@@ -112,8 +114,9 @@ class CRUDViewModel: ObservableObject {
             
             DispatchQueue.main.async {
                 self?.text = ""
-                self?.fetchItems()
             }
+            
+            self?.fetchItems()
         }
     }
     
@@ -164,6 +167,20 @@ class CRUDViewModel: ObservableObject {
         let record = fruit.record
         record["name"] = fruit.name + "*"
         saveItem(record: record)
+    }
+    
+    func delete(indexSet: IndexSet) {
+        guard let index = indexSet.first else { return }
+        let fruit = fruits[index]
+        let record = fruit.record
+        
+        CKContainer.default().publicCloudDatabase.delete(withRecordID: record.recordID) { id, error in
+            // TODO: Handle errors better
+            print("Record: \(id)")
+            print("❌ ERROR: \(error)")
+            
+            self.fetchItems()
+        }
     }
 }
 

@@ -12,6 +12,7 @@
 		3D13AA7C291AA8130015F67E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3D13AA7B291AA8130015F67E /* Assets.xcassets */; };
 		3D13AA7F291AA8130015F67E /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3D13AA7E291AA8130015F67E /* Preview Assets.xcassets */; };
 		3D13AA88291ABC9E0015F67E /* UserViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D13AA87291ABC9E0015F67E /* UserViewModel.swift */; };
+		3DDE7140291BFDE3002D9D39 /* CRUDView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DDE713F291BFDE3002D9D39 /* CRUDView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -22,6 +23,7 @@
 		3D13AA7E291AA8130015F67E /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		3D13AA85291AB9F70015F67E /* Cloud Notes.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "Cloud Notes.entitlements"; sourceTree = "<group>"; };
 		3D13AA87291ABC9E0015F67E /* UserViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserViewModel.swift; sourceTree = "<group>"; };
+		3DDE713F291BFDE3002D9D39 /* CRUDView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRUDView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -60,6 +62,7 @@
 				3D13AA79291AA8120015F67E /* UserView.swift */,
 				3D13AA7B291AA8130015F67E /* Assets.xcassets */,
 				3D13AA7D291AA8130015F67E /* Preview Content */,
+				3DDE713F291BFDE3002D9D39 /* CRUDView.swift */,
 			);
 			path = "Cloud Notes";
 			sourceTree = "<group>";
@@ -152,6 +155,7 @@
 			files = (
 				3D13AA7A291AA8120015F67E /* UserView.swift in Sources */,
 				3D13AA88291ABC9E0015F67E /* UserViewModel.swift in Sources */,
+				3DDE7140291BFDE3002D9D39 /* CRUDView.swift in Sources */,
 				3D13AA78291AA8120015F67E /* Cloud_NotesApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -289,6 +293,7 @@
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.4;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -322,6 +327,7 @@
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.4;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

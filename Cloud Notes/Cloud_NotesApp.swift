@@ -11,7 +11,7 @@ import SwiftUI
 struct Cloud_NotesApp: App {
     var body: some Scene {
         WindowGroup {
-            UserView()
+            CRUDView()
         }
     }
 }

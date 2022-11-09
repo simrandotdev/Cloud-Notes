@@ -115,10 +115,19 @@ class CRUDViewModel: ObservableObject {
     
     
     func fetchItems() {
-        // Create a Query Operation
+        
+        // Predicate can be used to filter results to a particular condition
         let predicate = NSPredicate(value: true)
+        
+        // Create a Query Operation
         let queryOperation = CKQueryOperation(query: .init(recordType: "Fruit", predicate: predicate))
-//        queryOperation.query?.sortDescriptors // You can add sort descriptors here as you want
+        
+        // You can add sort descriptors here as you want
+        queryOperation.query?.sortDescriptors = [NSSortDescriptor(key: "name", ascending: true)]
+        
+        // Max results in a single query is 100, we need to use cursors to fetch all records.
+//        queryOperation.resultsLimit //
+        
         
         var returnedItems: [String] = []
         
@@ -136,8 +145,9 @@ class CRUDViewModel: ObservableObject {
             }
         }
         
-        queryOperation.queryResultBlock = { [weak self] result in
-            print("RETURNED RESULT: \(result)")
+        queryOperation.queryResultBlock = { [weak self] resultCursor in
+            
+            print("RETURNED RESULT: \(resultCursor)")
             DispatchQueue.main.async {
                 self?.fruits = returnedItems
             }

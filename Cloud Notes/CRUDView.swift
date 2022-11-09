@@ -106,7 +106,7 @@ class CRUDViewModel: ObservableObject {
     
     private func saveItem(record: CKRecord) {
         
-        CKContainer.default().publicCloudDatabase.save(record) { [weak self] record, error in
+        CKContainer.default().privateCloudDatabase.save(record) { [weak self] record, error in
             
             // TODO: Handle errors better
             print("Record: \(record)")
@@ -160,7 +160,7 @@ class CRUDViewModel: ObservableObject {
         }
         
         // Add the Operation to the public cloud database
-        CKContainer.default().publicCloudDatabase.add(queryOperation)
+        CKContainer.default().privateCloudDatabase.add(queryOperation)
     }
     
     func updateItem(fruit: FruitModel) {
@@ -174,7 +174,7 @@ class CRUDViewModel: ObservableObject {
         let fruit = fruits[index]
         let record = fruit.record
         
-        CKContainer.default().publicCloudDatabase.delete(withRecordID: record.recordID) { id, error in
+        CKContainer.default().privateCloudDatabase.delete(withRecordID: record.recordID) { id, error in
             // TODO: Handle errors better
             print("Record: \(id)")
             print("❌ ERROR: \(error)")

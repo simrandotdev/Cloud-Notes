@@ -19,7 +19,9 @@ struct CRUDView: View {
                 textField
                 addButton
                 List {
-                    Text("Hi")
+                    ForEach(vm.fruits, id:\.self) { fruit in
+                        Text(fruit)
+                    }
                 }
                 .listStyle(.plain)
             }
@@ -79,6 +81,11 @@ extension CRUDView {
 class CRUDViewModel: ObservableObject {
      
     @Published var text: String = ""
+    @Published var fruits: [String] = []
+    
+    init() {
+        fetchItems()
+    }
     
     func addButtonPressed() {
         guard !text.isEmpty else { return }
@@ -95,6 +102,8 @@ class CRUDViewModel: ObservableObject {
     private func saveItem(record: CKRecord) {
         
         CKContainer.default().publicCloudDatabase.save(record) { [weak self] record, error in
+            
+            // TODO: Handle errors better
             print("Record: \(record)")
             print("❌ ERROR: \(error)")
             
@@ -102,5 +111,43 @@ class CRUDViewModel: ObservableObject {
                 self?.text = ""
             }
         }
+    }
+    
+    
+    func fetchItems() {
+        // Create a Query Operation
+        let predicate = NSPredicate(value: true)
+        let queryOperation = CKQueryOperation(query: .init(recordType: "Fruit", predicate: predicate))
+//        queryOperation.query?.sortDescriptors // You can add sort descriptors here as you want
+        
+        var returnedItems: [String] = []
+        
+        // This callback is called for each item in the database, so we append into our
+        // local property here.
+        queryOperation.recordMatchedBlock = { returnedRecordId, returnedResult in
+            switch returnedResult {
+            case .success(let record):
+                guard let name = record["name"] as? String else { return }
+                returnedItems.append(name)
+                break
+            case .failure(let error):
+                print("❌ ERROR: recordMatchedBlock: ", error.localizedDescription)
+                break
+            }
+        }
+        
+        queryOperation.queryResultBlock = { [weak self] result in
+            print("RETURNED RESULT: \(result)")
+            DispatchQueue.main.async {
+                self?.fruits = returnedItems
+            }
+        }
+        
+        // Add the Operation to the public cloud database
+        CKContainer.default().publicCloudDatabase.add(queryOperation)
+    }
+    
+    private func addOperation(operation: CKDatabaseOperation) {
+        
     }
 }

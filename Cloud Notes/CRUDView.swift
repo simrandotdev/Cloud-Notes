@@ -20,7 +20,16 @@ struct CRUDView: View {
                 addButton
                 List {
                     ForEach(vm.fruits, id:\.self) { fruit in
-                        Text(fruit.name ?? "No Fruit available")
+                        HStack {
+                            if let url = fruit.imageURL,
+                                let data = try? Data(contentsOf: url),
+                               let image = UIImage(data: data) {
+                                Image(uiImage: image)
+                                    .resizable()
+                                    .frame(width: 50, height: 50)
+                            }
+                            Text(fruit.name ?? "No Fruit available")
+                        }
                             .onTapGesture {
                                 vm.updateItem(fruit: fruit)
                             }
@@ -209,7 +218,7 @@ struct FruitModel: Hashable {
         self.record = record
     }
     
-    init(name: String) {
+    init(name: String, imageUrl: URL? = nil) {
         let record = CKRecord(recordType: "Fruit")
         record["name"] = name
         self.record = record
@@ -217,5 +226,10 @@ struct FruitModel: Hashable {
     
     var name: String {
         return record["name"] as? String ?? ""
+    }
+    
+    var imageURL: URL? {
+        let asset = record["image"] as? CKAsset
+        return asset?.fileURL
     }
 }

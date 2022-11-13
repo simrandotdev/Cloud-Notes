@@ -7,6 +7,7 @@
 
 import Foundation
 import CloudKit
+import Combine
 
 class UserViewModel: ObservableObject {
  
@@ -14,42 +15,27 @@ class UserViewModel: ObservableObject {
     @Published var username: String = ""
     @Published var error: String = ""
     
+    private var cancellables = Set<AnyCancellable>()
+    
     init() {
         getiCloudStatus()
         requestPermission()
     }
     
     private func getiCloudStatus() {
-        CKContainer.default().accountStatus { [weak self] returnedStatus, returnedError in
-            
-            if let returnedError{
-                print("❌ ERROR: COULD NOT GET ACCOUNT STATUS FROM CLOUDKIT", returnedError.localizedDescription)
-                return
-            }
-            
-            DispatchQueue.main.async {
-                switch returnedStatus {
-                case .couldNotDetermine:
-                    self?.error = "❌ " + CloudKitError.iCloudAccountNotFound.localizedDescription
+        CloudKitUtility.getiCloudStatus()
+            .receive(on: DispatchQueue.main)
+            .sink { completion in
+                switch completion {
+                case .finished:
                     break
-                case .available:
-                    self?.isSignedIntoiCloud = true
-                    break
-                case .restricted:
-                    self?.error = "❌ " + CloudKitError.iCloudAccountRestricted.localizedDescription
-                    break
-                case .noAccount:
-                    self?.error = "❌ " + CloudKitError.iCloudAccountNotFound.localizedDescription
-                    break
-                case .temporarilyUnavailable:
-                    self?.error = "❌ " + CloudKitError.iCloudAccountUnknown.localizedDescription
-                    break
-                @unknown default:
-                    self?.error = "❌ " + CloudKitError.iCloudAccountUnknown.localizedDescription
-                    break
+                case .failure(let error):
+                    self.error = "❌ " + error.localizedDescription
                 }
+            } receiveValue: { [weak self] success in
+                self?.isSignedIntoiCloud = success
             }
-        }
+            .store(in: &cancellables)
     }
     
     

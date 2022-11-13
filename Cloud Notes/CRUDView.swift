@@ -153,7 +153,7 @@ class CRUDViewModel: ObservableObject {
         CloudKitUtility.fetch(recordType: "Fruit", predicate: predicate) { [weak self] fruits in
             
             DispatchQueue.main.async {
-                self?.fruits = fruits
+                self?.fruits = fruits 
             }
         }
     }
@@ -179,9 +179,9 @@ class CRUDViewModel: ObservableObject {
     }
 }
 
-
-struct FruitModel: Hashable {
-    let record: CKRecord
+struct FruitModel: iCloudModel {
+    
+    var record: CKRecord
     
     init(record: CKRecord) {
         self.record = record

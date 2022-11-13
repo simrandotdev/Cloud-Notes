@@ -9,6 +9,16 @@ import Foundation
 import CloudKit
 import Combine
 
+
+
+protocol iCloudModel: Hashable {
+    
+    var record: CKRecord { get set }
+    
+    init(record: CKRecord)
+}
+
+
 class CloudKitUtility {
     
     // MARK: - User Functions
@@ -134,11 +144,11 @@ class CloudKitUtility {
     
     // MARK: CRUD Functions
     
-    static func fetch(recordType: String,
+    static func fetch<T: iCloudModel>(recordType: String,
                       predicate: NSPredicate = NSPredicate(value: true),
                       sortDescriptors: [NSSortDescriptor]? = nil,
                       resultsLimit: Int? = nil,
-                      completion: @escaping ([FruitModel]) -> Void) {
+                      completion: @escaping ([T]) -> Void) {
         
         let operation = createOperation(recordType: recordType,
                                         predicate: predicate,
@@ -146,7 +156,7 @@ class CloudKitUtility {
                                         resultsLimit: resultsLimit)
         
         // Get items in query
-        var returnedItems: [FruitModel] = []
+        var returnedItems: [T] = []
         addRecordMatchBlock(operation: operation) { fruit in
             returnedItems.append(fruit)
         }
@@ -160,12 +170,12 @@ class CloudKitUtility {
     }
     
     
-    static private func addRecordMatchBlock(operation: CKQueryOperation, completion: @escaping (_ fruit: FruitModel) -> Void) {
+    static private func addRecordMatchBlock<T: iCloudModel>(operation: CKQueryOperation, completion: @escaping (_ fruit: T) -> Void) {
         
         operation.recordMatchedBlock = { returnedRecordId, returnedResult in
             switch returnedResult {
             case .success(let record):
-                completion(FruitModel(record: record))
+                completion(T.init(record: record))
                 break
             case .failure(let error):
                 print("❌ ERROR: recordMatchedBlock: ", error.localizedDescription)

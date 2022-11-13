@@ -51,4 +51,82 @@ class CloudKitUtility {
             }
         }
     }
+    
+    
+    
+    
+    
+    
+    
+    
+    static private func requestApplicationPermission(completion: @escaping(Result<Bool, Error>) -> Void) {
+        CKContainer.default().requestApplicationPermission([.userDiscoverability]) {status, error in
+            if let error{
+                print("❌ ERROR: COULD NOT REQUEST PERMISSION", error.localizedDescription)
+                return
+            }
+            
+            if status == .granted {
+                completion(.success(true))
+            } else {
+                completion(.failure(CloudKitError.iCloudPermissionNotGranted))
+            }
+        }
+    }
+    
+    static func requestApplicationPermission() -> Future<Bool, Error>  {
+        Future { promise in
+            CloudKitUtility.requestApplicationPermission { result in
+                promise(result)
+            }
+        }
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    static private func fetchUserRecordID(completion: @escaping(Result<CKRecord.ID, Error>) -> Void) {
+        CKContainer.default().fetchUserRecordID { recordID, error in
+            if let recordID {
+                completion(.success(recordID))
+            } else {
+                completion(.failure(CloudKitError.iCloudCouldNotFetchUserRecordId))
+            }
+        }
+    }
+    
+    static private func discoverUserIdentity(id: CKRecord.ID, completion: @escaping(Result<String, Error>) -> Void) {
+        CKContainer.default().discoverUserIdentity(withUserRecordID: id) { identity, error in
+            if let name = identity?.nameComponents?.givenName {
+                completion(.success(name))
+            } else {
+                completion(.failure(CloudKitError.iCloudCouldNotDiscoverUser))
+            }
+        }
+    }
+    
+    static private func discoverUserIdentity(completion: @escaping(Result<String, Error>) -> Void) {
+        fetchUserRecordID { fetchCompletionResult in
+            switch fetchCompletionResult {
+            case .success(let recordId):
+                CloudKitUtility.discoverUserIdentity(id: recordId, completion: completion)
+            case .failure(let failure):
+                completion(.failure(failure))
+            }
+        }
+    }
+    
+    static func discoverUserIdentity() -> Future<String, Error> {
+        Future { promise in
+            CloudKitUtility.discoverUserIdentity { result in
+                promise(result)
+            }
+        }
+    }
+    
 }

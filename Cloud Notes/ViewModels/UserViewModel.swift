@@ -12,6 +12,7 @@ import Combine
 class UserViewModel: ObservableObject {
  
     @Published var isSignedIntoiCloud = false
+    @Published var permissionStatus = false
     @Published var username: String = ""
     @Published var error: String = ""
     
@@ -40,53 +41,44 @@ class UserViewModel: ObservableObject {
     
     
     func requestPermission() {
-        CKContainer.default().requestApplicationPermission([.userDiscoverability]) { [weak self] status, error in
-            if let error{
-                print("❌ ERROR: COULD NOT REQUEST PERMISSION", error.localizedDescription)
-                return
+        
+        
+        CloudKitUtility.requestApplicationPermission()
+            .sink { completion in
+                switch completion {
+                case .finished:
+                    break
+                case .failure(let error):
+                    self.error = "❌ " + error.localizedDescription
+                }
+            } receiveValue: {[weak self] success in
+                if success {
+                    self?.getCurrentUserName()
+                }
+                self?.permissionStatus = success
             }
-            
-            switch status {
-            case .initialState:
-                self?.error = "❌ Trying to get persmission"
-            case .couldNotComplete:
-                self?.error = "❌ Could not complete the permission request"
-            case .denied:
-                self?.error = "❌ Permission denied to fetch any user info from iCloud"
-            case .granted:
-                self?.fetchiCloudUserRecordID()
-            @unknown default:
-                self?.error = "❌ " + CloudKitError.iCloudAccountUnknown.localizedDescription
-            }
-        }
+            .store(in: &cancellables)
+
     }
     
-    func fetchiCloudUserRecordID() {
-        CKContainer.default().fetchUserRecordID { [weak self] recordID, error in
-            if let error{
-                print("❌ ERROR: COULD NOT FETCH iCloud USER RECORD ID", error.localizedDescription)
-                return
-            }
-            
-            if let recordID {
-                self?.discoveriCloudUser(id: recordID)
-            }
-        }
-    }
     
-    func discoveriCloudUser(id: CKRecord.ID) {
-        CKContainer.default().discoverUserIdentity(withUserRecordID: id) { [weak self] identity, error in
-            if let error{
-                print("❌ ERROR: COULD NOT GET iCloud USER", error.localizedDescription)
-                return
-            }
-            
-            DispatchQueue.main.async {
-                if let name = identity?.nameComponents?.givenName {
-                    self?.username = name
+    func getCurrentUserName() {
+        CloudKitUtility.discoverUserIdentity()
+            .receive(on: DispatchQueue.main)
+            .sink { completion in
+                switch completion {
+                case .finished:
+                    break
+                case .failure(let error):
+                    self.error = "❌ " + error.localizedDescription
+                }
+            } receiveValue: { [weak self] username in
+                DispatchQueue.main.async {
+                    self?.username = username
                 }
             }
-        }
+            .store(in: &cancellables)
+
     }
 }
 
@@ -96,4 +88,7 @@ enum CloudKitError: LocalizedError {
     case iCloudAccountNotDetermined
     case iCloudAccountRestricted
     case iCloudAccountUnknown
+    case iCloudPermissionNotGranted
+    case iCloudCouldNotFetchUserRecordId
+    case iCloudCouldNotDiscoverUser
 }

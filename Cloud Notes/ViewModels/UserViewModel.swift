@@ -83,12 +83,3 @@ class UserViewModel: ObservableObject {
 }
 
 
-enum CloudKitError: LocalizedError {
-    case iCloudAccountNotFound
-    case iCloudAccountNotDetermined
-    case iCloudAccountRestricted
-    case iCloudAccountUnknown
-    case iCloudPermissionNotGranted
-    case iCloudCouldNotFetchUserRecordId
-    case iCloudCouldNotDiscoverUser
-}

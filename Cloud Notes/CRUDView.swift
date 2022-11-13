@@ -149,44 +149,13 @@ class CRUDViewModel: ObservableObject {
     
     func fetchItems() {
         
-        // Predicate can be used to filter results to a particular condition
         let predicate = NSPredicate(value: true)
-        
-        // Create a Query Operation
-        let queryOperation = CKQueryOperation(query: .init(recordType: "Fruit", predicate: predicate))
-        
-        // You can add sort descriptors here as you want
-        queryOperation.query?.sortDescriptors = [NSSortDescriptor(key: "name", ascending: true)]
-        
-        // Max results in a single query is 100, we need to use cursors to fetch all records.
-//        queryOperation.resultsLimit //
-        
-        
-        var returnedItems: [FruitModel] = []
-        
-        // This callback is called for each item in the database, so we append into our
-        // local property here.
-        queryOperation.recordMatchedBlock = { returnedRecordId, returnedResult in
-            switch returnedResult {
-            case .success(let record):
-                returnedItems.append(FruitModel(record: record))
-                break
-            case .failure(let error):
-                print("❌ ERROR: recordMatchedBlock: ", error.localizedDescription)
-                break
-            }
-        }
-        
-        queryOperation.queryResultBlock = { [weak self] resultCursor in
+        CloudKitUtility.fetch(recordType: "Fruit", predicate: predicate) { [weak self] fruits in
             
-            print("RETURNED RESULT: \(resultCursor)")
             DispatchQueue.main.async {
-                self?.fruits = returnedItems
+                self?.fruits = fruits
             }
         }
-        
-        // Add the Operation to the public cloud database
-        CKContainer.default().publicCloudDatabase.add(queryOperation)
     }
     
     func updateItem(fruit: FruitModel) {

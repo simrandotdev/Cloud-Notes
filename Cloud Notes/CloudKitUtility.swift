@@ -11,6 +11,7 @@ import Combine
 
 class CloudKitUtility {
     
+    // MARK: - User Functions
     static private func getiCloudStatus( completion: @escaping(Result<Bool, Error>) -> Void ) {
         CKContainer.default().accountStatus { returnedStatus, returnedError in
             
@@ -129,4 +130,93 @@ class CloudKitUtility {
         }
     }
     
+    
+    
+    // MARK: CRUD Functions
+    
+    static func fetch(recordType: String,
+                      predicate: NSPredicate = NSPredicate(value: true),
+                      sortDescriptors: [NSSortDescriptor]? = nil,
+                      resultsLimit: Int? = nil,
+                      completion: @escaping ([FruitModel]) -> Void) {
+        
+        let operation = createOperation(recordType: recordType,
+                                        predicate: predicate,
+                                        sortDescriptors: sortDescriptors,
+                                        resultsLimit: resultsLimit)
+        
+        // Get items in query
+        var returnedItems: [FruitModel] = []
+        addRecordMatchBlock(operation: operation) { fruit in
+            returnedItems.append(fruit)
+        }
+        
+        // Only called when all the returned items are finished
+        queryResultBlock(operation: operation) { finished in
+            completion(returnedItems)
+        }
+        
+        addOperation(operation: operation)
+    }
+    
+    
+    static private func addRecordMatchBlock(operation: CKQueryOperation, completion: @escaping (_ fruit: FruitModel) -> Void) {
+        
+        operation.recordMatchedBlock = { returnedRecordId, returnedResult in
+            switch returnedResult {
+            case .success(let record):
+                completion(FruitModel(record: record))
+                break
+            case .failure(let error):
+                print("❌ ERROR: recordMatchedBlock: ", error.localizedDescription)
+                break
+            }
+        }
+    }
+    
+    static private func queryResultBlock(operation: CKQueryOperation, completion: @escaping (_ finished: Bool) -> Void) {
+        
+        operation.queryResultBlock = { resultCursor in
+            
+            completion(true)
+        }
+    }
+    
+    static private func createOperation(recordType: String,
+                                        predicate: NSPredicate = NSPredicate(value: true),
+                                        sortDescriptors: [NSSortDescriptor]? = nil,
+                                        resultsLimit: Int? = nil) -> CKQueryOperation {
+        
+        // Create a Query Operation
+        let queryOperation = CKQueryOperation(query: .init(recordType: recordType, predicate: predicate))
+        
+        // You can add sort descriptors here as you want
+        queryOperation.query?.sortDescriptors = sortDescriptors
+        
+        if let resultsLimit {
+            queryOperation.resultsLimit = resultsLimit
+        }
+        
+        return queryOperation
+    }
+    
+    
+    static func addOperation(operation: CKDatabaseOperation) {
+        CKContainer.default().publicCloudDatabase.add(operation)
+    }
+}
+
+
+
+// MARK: - Errors
+
+
+enum CloudKitError: LocalizedError {
+    case iCloudAccountNotFound
+    case iCloudAccountNotDetermined
+    case iCloudAccountRestricted
+    case iCloudAccountUnknown
+    case iCloudPermissionNotGranted
+    case iCloudCouldNotFetchUserRecordId
+    case iCloudCouldNotDiscoverUser
 }

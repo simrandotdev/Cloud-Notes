@@ -7,6 +7,7 @@
 
 import SwiftUI
 import CloudKit
+import Combine
 
 struct CRUDView: View {
     
@@ -97,6 +98,8 @@ class CRUDViewModel: ObservableObject {
     @Published var text: String = ""
     @Published var fruits: [FruitModel] = []
     
+    private var cancellables = Set<AnyCancellable>()
+    
     init() {
         fetchItems()
     }
@@ -107,75 +110,91 @@ class CRUDViewModel: ObservableObject {
     }
     
     private func addItem(name: String) {
-        
-        let record = CKRecord(recordType: "Fruit")
-        record["name"] = name
-        
-        // Attaching Image
-        guard let image = UIImage(named: "twitter"),
-              let url = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first?.appendingPathComponent("\(name).jpg"),
-              let data = image.jpegData(compressionQuality: 1.0)
-        else { return }
-        
+
         do {
+            let record = CKRecord(recordType: "Fruit")
+            record["name"] = name
+            
+            // Attaching Image
+            guard let image = UIImage(named: "twitter"),
+                  let url = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first?.appendingPathComponent("\(name).jpg"),
+                  let data = image.jpegData(compressionQuality: 1.0)
+            else { return }
+            
             try data.write(to: url)
             let asset = CKAsset(fileURL: url)
             record["image"] = asset
+            
+            saveItem(model: .init(record: record))
         } catch {
             print("❌ Error in \(#function) ", error)
         }
         
         // Saving it.
-        saveItem(record: record)
+        
     }
     
-    private func saveItem(record: CKRecord) {
+    private func saveItem(model: FruitModel) {
         
-        CKContainer.default().publicCloudDatabase.save(record) { [weak self] record, error in
-            
-            // TODO: Handle errors better
-            print("Record: \(record)")
-            print("❌ ERROR: \(error)")
-            
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
-                self?.text = ""
-                self?.fetchItems()
+        CloudKitUtility.save(model)
+            .receive(on: DispatchQueue.main)
+            .sink { completion in
+                switch completion {
+                case .finished:
+                    print("✅ Successfully saved")
+                case .failure(let error):
+                    print("❌ Error in \(#function) ", error)
+                }
+            } receiveValue: { [weak self] record in
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                    self?.text = ""
+                    self?.fetchItems()
+                }
             }
-            
-            
-        }
+            .store(in: &cancellables)
     }
     
     
     func fetchItems() {
         
         let predicate = NSPredicate(value: true)
-        CloudKitUtility.fetch(recordType: "Fruit", predicate: predicate) { [weak self] fruits in
-            
-            DispatchQueue.main.async {
-                self?.fruits = fruits 
-            }
-        }
+        CloudKitUtility
+            .fetch(recordType: "Fruit", predicate: predicate)
+            .receive(on: DispatchQueue.main)
+            .sink(receiveValue: { [weak self] (items: [FruitModel]) in
+                self?.fruits = items
+            })
+            .store(in: &cancellables)
     }
     
     func updateItem(fruit: FruitModel) {
         let record = fruit.record
         record["name"] = fruit.name + "*"
-        saveItem(record: record)
+        
+        let updatedFruit = FruitModel(record: record)
+        
+        saveItem(model: updatedFruit)
     }
     
     func delete(indexSet: IndexSet) {
-        guard let index = indexSet.first else { return }
-        let fruit = fruits[index]
-        let record = fruit.record
         
-        CKContainer.default().publicCloudDatabase.delete(withRecordID: record.recordID) { id, error in
-            // TODO: Handle errors better
-            print("Record: \(id)")
-            print("❌ ERROR: \(error)")
-            
-            self.fetchItems()
-        }
+        CloudKitUtility.delete(indexSet: indexSet, from: fruits)
+            .receive(on: DispatchQueue.main)
+            .sink { completion in
+                switch completion {
+                case .finished:
+                   break
+                case .failure(let error):
+                    print("❌ ERROR: \(error)")
+                }
+                
+            } receiveValue: {[weak self] success in
+                if success {
+                    self?.fetchItems()
+                }
+            }
+            .store(in: &cancellables)
+
     }
 }
 
@@ -190,6 +209,9 @@ struct FruitModel: iCloudModel {
     init(name: String, imageUrl: URL? = nil) {
         let record = CKRecord(recordType: "Fruit")
         record["name"] = name
+        if let imageUrl {
+            record["image"] = CKAsset(fileURL: imageUrl)
+        }
         self.record = record
     }
     

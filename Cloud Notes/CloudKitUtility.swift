@@ -142,9 +142,26 @@ class CloudKitUtility {
     
     
     
-    // MARK: CRUD Functions
+    // MARK:- CRUD Functions
+    
+    // MARK: Fetch function
     
     static func fetch<T: iCloudModel>(recordType: String,
+                                                  predicate: NSPredicate = NSPredicate(value: true),
+                                                  sortDescriptors: [NSSortDescriptor]? = nil,
+                                                  resultsLimit: Int? = nil) -> Future<[T], Never> {
+        
+        Future { promise in
+            CloudKitUtility.fetch(recordType: recordType,
+                                  predicate: predicate,
+                                  sortDescriptors: sortDescriptors,
+                                  resultsLimit: resultsLimit) { items in
+                promise(.success(items))
+            }
+        }
+    }
+    
+    static private func fetch<T: iCloudModel>(recordType: String,
                       predicate: NSPredicate = NSPredicate(value: true),
                       sortDescriptors: [NSSortDescriptor]? = nil,
                       resultsLimit: Int? = nil,
@@ -214,6 +231,52 @@ class CloudKitUtility {
     static func addOperation(operation: CKDatabaseOperation) {
         CKContainer.default().publicCloudDatabase.add(operation)
     }
+    
+    
+    // MARK: Save function
+    static private func save<T: iCloudModel>(_ recordModel: T, completion: @escaping (Result<CKRecord, Error>) -> Void) {
+        
+        CKContainer.default().publicCloudDatabase.save(recordModel.record) { record, error in
+            if let record {
+                completion(.success(record))
+            } else {
+                completion(.failure(CloudKitError.iCloudFailedToSaveRecord))
+            }
+        }
+    }
+    
+    static func save<T: iCloudModel>(_ recordModel: T) -> Future<CKRecord, Error> {
+        Future { promise in
+            CloudKitUtility.save(recordModel, completion: promise)
+        }
+    }
+    
+    
+    // MARK: Delete Function
+    static private func delete<T: iCloudModel>(indexSet: IndexSet,
+                                       from records: [T],
+                                       completion: @escaping (Result<Bool, Error>) -> Void) {
+        
+        guard let index = indexSet.first else { return }
+        let recordToDelete = records[index]
+        let record = recordToDelete.record
+        
+        CKContainer.default().publicCloudDatabase.delete(withRecordID: record.recordID) { id, error in
+            if id != nil {
+                completion(.success(true))
+            } else {
+                completion(.failure(CloudKitError.iCloudFailedToDeleteRecords))
+            }
+        }
+    }
+    
+    
+    static func delete<T: iCloudModel>(indexSet: IndexSet,
+                                       from records: [T]) -> Future<Bool, Error> {
+        Future { promise in
+            CloudKitUtility.delete(indexSet: indexSet, from: records, completion: promise)
+        }
+    }
 }
 
 
@@ -229,4 +292,6 @@ enum CloudKitError: LocalizedError {
     case iCloudPermissionNotGranted
     case iCloudCouldNotFetchUserRecordId
     case iCloudCouldNotDiscoverUser
+    case iCloudFailedToSaveRecord
+    case iCloudFailedToDeleteRecords
 }

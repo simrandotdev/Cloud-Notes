@@ -22,6 +22,15 @@ protocol iCloudModel: Hashable {
 class CloudKitUtility {
     
     // MARK: - User Functions
+    
+    static func getiCloudStatus() -> Future<Bool, Error> {
+        Future { promise in
+            CloudKitUtility.getiCloudStatus { result in
+                promise(result)
+            }
+        }
+    }
+    
     static private func getiCloudStatus( completion: @escaping(Result<Bool, Error>) -> Void ) {
         CKContainer.default().accountStatus { returnedStatus, returnedError in
             
@@ -55,17 +64,7 @@ class CloudKitUtility {
         }
     }
     
-    static func getiCloudStatus() -> Future<Bool, Error> {
-        Future { promise in
-            CloudKitUtility.getiCloudStatus { result in
-                promise(result)
-            }
-        }
-    }
-    
-    
-    
-    
+/*********************************************************************************/
     
     
     
@@ -93,30 +92,12 @@ class CloudKitUtility {
         }
     }
     
+    /*********************************************************************************/
     
-    
-    
-    
-    
-    
-    
-    
-    static private func fetchUserRecordID(completion: @escaping(Result<CKRecord.ID, Error>) -> Void) {
-        CKContainer.default().fetchUserRecordID { recordID, error in
-            if let recordID {
-                completion(.success(recordID))
-            } else {
-                completion(.failure(CloudKitError.iCloudCouldNotFetchUserRecordId))
-            }
-        }
-    }
-    
-    static private func discoverUserIdentity(id: CKRecord.ID, completion: @escaping(Result<String, Error>) -> Void) {
-        CKContainer.default().discoverUserIdentity(withUserRecordID: id) { identity, error in
-            if let name = identity?.nameComponents?.givenName {
-                completion(.success(name))
-            } else {
-                completion(.failure(CloudKitError.iCloudCouldNotDiscoverUser))
+    static func discoverUserIdentity() -> Future<String, Error> {
+        Future { promise in
+            CloudKitUtility.discoverUserIdentity { result in
+                promise(result)
             }
         }
     }
@@ -132,14 +113,36 @@ class CloudKitUtility {
         }
     }
     
-    static func discoverUserIdentity() -> Future<String, Error> {
-        Future { promise in
-            CloudKitUtility.discoverUserIdentity { result in
-                promise(result)
+    static private func discoverUserIdentity(id: CKRecord.ID, completion: @escaping(Result<String, Error>) -> Void) {
+        CKContainer.default().discoverUserIdentity(withUserRecordID: id) { identity, error in
+            if let name = identity?.nameComponents?.givenName {
+                completion(.success(name))
+            } else {
+                completion(.failure(CloudKitError.iCloudCouldNotDiscoverUser))
             }
         }
     }
     
+    
+    static private func fetchUserRecordID(completion: @escaping(Result<CKRecord.ID, Error>) -> Void) {
+        CKContainer.default().fetchUserRecordID { recordID, error in
+            if let recordID {
+                completion(.success(recordID))
+            } else {
+                completion(.failure(CloudKitError.iCloudCouldNotFetchUserRecordId))
+            }
+        }
+    }
+    
+    
+    
+    
+    
+    
+    /*********************************************************************************/
+    /*********************************************************************************/
+    /*********************************************************************************/
+    /*********************************************************************************/
     
     
     // MARK:- CRUD Functions
@@ -233,7 +236,19 @@ class CloudKitUtility {
     }
     
     
+    /*********************************************************************************/
+    
+    
     // MARK: Save function
+    
+    static func save<T: iCloudModel>(_ recordModel: T) -> Future<CKRecord, Error> {
+        Future { promise in
+            CloudKitUtility.save(recordModel, completion: promise)
+        }
+    }
+    
+    
+    
     static private func save<T: iCloudModel>(_ recordModel: T, completion: @escaping (Result<CKRecord, Error>) -> Void) {
         
         CKContainer.default().publicCloudDatabase.save(recordModel.record) { record, error in
@@ -245,14 +260,19 @@ class CloudKitUtility {
         }
     }
     
-    static func save<T: iCloudModel>(_ recordModel: T) -> Future<CKRecord, Error> {
+    
+    /*********************************************************************************/
+    
+    // MARK: Delete Function
+    
+    static func delete<T: iCloudModel>(indexSet: IndexSet,
+                                       from records: [T]) -> Future<Bool, Error> {
         Future { promise in
-            CloudKitUtility.save(recordModel, completion: promise)
+            CloudKitUtility.delete(indexSet: indexSet, from: records, completion: promise)
         }
     }
     
     
-    // MARK: Delete Function
     static private func delete<T: iCloudModel>(indexSet: IndexSet,
                                        from records: [T],
                                        completion: @escaping (Result<Bool, Error>) -> Void) {
@@ -267,14 +287,6 @@ class CloudKitUtility {
             } else {
                 completion(.failure(CloudKitError.iCloudFailedToDeleteRecords))
             }
-        }
-    }
-    
-    
-    static func delete<T: iCloudModel>(indexSet: IndexSet,
-                                       from records: [T]) -> Future<Bool, Error> {
-        Future { promise in
-            CloudKitUtility.delete(indexSet: indexSet, from: records, completion: promise)
         }
     }
 }
